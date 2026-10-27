@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
+
+set -eo pipefail
+
 # https://docs.flutter.dev/deployment/ios
 # flutter build ipa --release --obfuscate --split-debug-info=./split-debug-info
 # no obfuscate, because no easy to check errors
+
 cd "$(dirname "$(dirname "$(which flutter)")")"
-git apply ~/rustdesk/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff
+if ! git apply ~/rustdesk/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff; then
+  if ! git apply -R ~/rustdesk/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff; then
+    echo 'ERROR: Patch "~/rustdesk/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff" does not apply!' >&2
+    exit 1
+  fi
+  git apply ~/rustdesk/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff
+fi
 cd -
 
 flutter packages pub get --enforce-lockfile

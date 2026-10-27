@@ -286,9 +286,17 @@ def generate_build_script_for_docker():
                 cat pubspec.lock
                 echo "=========================="
                 echo ""
-
-                exit 1
+              else
+                # We do not use Flutter version so old that it Dart compiler
+                # lacks `--enforce-lockfile` but CodeRabbit AI pointed that
+                # on review so it makes sense to handle this rare edge case
+                echo "ERROR: Getting Flutter packages failed despite lockfile 'pubspec.lock' is the same!"
+                echo ""
+                echo "Run 'flutter packages pub get --verbose --enforce-lockfile'"
+                echo "to debug this weird situation!"
+                echo ""
               fi
+              exit 1
             fi
             # basilgello: Unfortunately, this protection is not enough to prevent hijack
             # because `flutter build` calls another `dart pub get` under the hood and we
