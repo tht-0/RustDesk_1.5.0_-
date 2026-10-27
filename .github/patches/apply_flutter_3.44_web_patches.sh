@@ -12,11 +12,17 @@
 #
 # Idempotent. To undo the source changes locally:
 #   git checkout -- flutter/lib/common.dart flutter/pubspec.yaml flutter/pubspec.lock
-set -euo pipefail
+set -eo pipefail
+
+# Bail out if FLUTTER_BRIDGE_VERSION env variable is not defined
+if [ -z "${FLUTTER_BRIDGE_VERSION}" ]; then
+  echo "ERROR: Missing environment variable FLUTTER_BRIDGE_VERSION!" >&2
+  echo '(like: export FLUTTER_BRIDGE_VERSION="3.44.8")' >&2
+  exit 1
+fi
 
 # Lockfile name for bridge builder
-# TODO: Change whenever Flutter version is bumped!
-BRIDGE_PUBSPEC_LOCKFILE_NAME='pubspec-bridge-3.44.8.lock'
+BRIDGE_PUBSPEC_LOCKFILE_NAME="pubspec-bridge-${FLUTTER_BRIDGE_VERSION}.lock"
 
 flutter --version | grep -q "Flutter 3\.44\." || {
   echo "Flutter 3.44.x must be on PATH; found:" >&2

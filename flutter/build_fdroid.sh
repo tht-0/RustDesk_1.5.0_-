@@ -154,8 +154,8 @@ prebuild)
 		.github/workflows/bridge.yml)"
 
 	FLUTTER_BRIDGE_VERSION="$(yq -r \
-		'.jobs.generate_bridge.strategy.matrix.job[] | select(.["artifact-name"] == "bridge-artifact") | .["flutter-version"]' \
-		.github/workflows/bridge.yml)"
+		.env.FLUTTER_BRIDGE_DEFAULT_VERSION \
+		.github/workflows/flutter-build.yml)"
 
 	FLUTTER_RUST_BRIDGE_VERSION="$(yq -r \
 		.env.FLUTTER_RUST_BRIDGE_VERSION \

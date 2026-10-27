@@ -37,6 +37,9 @@ env:
   FLUTTER_WINDOWS_ARM_VERSION: "3.44.9"
   # for arm64 linux because official Dart SDK does not work
   FLUTTER_ELINUX_VERSION: "3.16.9"
+  # Flutter versions to generate Flutter-Rust bridge
+  FLUTTER_BRIDGE_DEFAULT_VERSION: "3.22.3"
+  FLUTTER_BRIDGE_ARM64_VERSION: "3.44.8"
   TAG_NAME: "${{ inputs.upload-tag }}"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # vcpkg version: 2026.07.29
@@ -123,9 +126,25 @@ jobs:
           files: |
             rustdesk.sbom.json
 
-  generate-bridge:
+  set-env-for-generate-bridge:
     needs: [validate-update-metadata-keys]
+    runs-on: ubuntu-latest
+    outputs:
+      flutter_bridge_default_version: ${{ steps.set-flutter-bridge-versions.outputs.flutter_bridge_default_version }}
+      flutter_bridge_arm64_version: ${{ steps.set-flutter-bridge-versions.outputs.flutter_bridge_arm64_version }}
+    steps:
+      - name: Set Flutter bridge versions from environment variables
+        id: set-flutter-bridge-versions
+        run: |
+          echo "::set-output name=flutter_bridge_default_version::${FLUTTER_BRIDGE_DEFAULT_VERSION}"
+          echo "::set-output name=flutter_bridge_arm64_version::${FLUTTER_BRIDGE_ARM64_VERSION}"
+
+  generate-bridge:
+    needs: [set-env-for-generate-bridge]
     uses: ./.github/workflows/bridge.yml
+    with:
+      flutter_bridge_default_version: ${{ needs.set-env-for-generate-bridge.outputs.flutter_bridge_default_version }}
+      flutter_bridge_arm64_version: ${{ needs.set-env-for-generate-bridge.outputs.flutter_bridge_arm64_version }}
 
   build-RustDeskTempTopMostWindow:
     needs: [validate-update-metadata-keys]
@@ -280,7 +299,7 @@ jobs:
         run: |
           set -eo pipefail
           bash .github/patches/apply_flutter_3.44_source_patches.sh
-          cp flutter/pubspec-bridge-3.44.8.lock flutter/pubspec.lock
+          cp "flutter/pubspec-bridge-${FLUTTER_BRIDGE_ARM64_VERSION}.lock" flutter/pubspec.lock
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
@@ -3076,6 +3095,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ env.FLUTTER_VERSION }}" == 3.44.* ]]; then
+            export FLUTTER_BRIDGE_VERSION="${FLUTTER_BRIDGE_ARM64_VERSION}"
             bash .github/patches/apply_flutter_3.44_web_patches.sh
           fi
 
